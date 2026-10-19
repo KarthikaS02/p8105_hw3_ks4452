@@ -466,4 +466,4 @@ citibike_df |>
   )
 ```
 
-Casual riders had longer rides than members for both classic and electric bikes in January and July. Ride durations were also longer in July than in January particulary for casual riders. Classic bike rides also seem to have longer median durations than electric bike rides for casual riders, and the difference was smaller for members. The distributions also have long upper tails and this shows that some rides lasted much longer than the typical ride.
+Casual riders had longer rides than members for both classic and electric bikes in January and July. Ride durations were also longer in July than in January, particularly for casual riders. For casual riders, classic bike rides seem to be longer than electric bike rides, and the member distributions were more similar across bike types. The distributions also have long upper tails which show that some rides lasted much longer than the typical ride.
