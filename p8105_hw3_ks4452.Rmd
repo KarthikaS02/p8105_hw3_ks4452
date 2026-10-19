@@ -2,29 +2,149 @@
 title: "Homework 3"
 author: "Karthika Shankar"
 date: "2026-10-19"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(p8105.datasets)
+library(patchwork)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+# Problem 1
+```{r}
+data("ny_noaa")
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+ny_noaa
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+str(ny_noaa)
+```
+```{r}
+ny_noaa |>
+  summarize(
+    missing_prcp = mean(is.na(prcp)),
+    missing_snow = mean(is.na(snow)),
+    missing_snwd = mean(is.na(snwd)),
+    missing_tmax = mean(is.na(tmax)),
+    missing_tmin = mean(is.na(tmin))
+  )
+```
+
+The ny_noaa dataset has 2,595,176 observations and 7 variables. It includes the station ID, date, precipitation, snowfall, snow depth, maximum temperature, and minimum temperature. The date variable is stored as a date, precipitation, snowfall, and snow depth are stored as integers, and id, maximum, and minimum temperature are stored as character variables. There is a decent amount of missing data mostly for temperature, about 5.6% of precipitation values are missing, 14.7% of snowfall values are missing, 22.8% of snow depth values are missing, and about 43.7% of both maximum and minimum temperature values are missing.
+
+```{r}
+ny_noaa =
+  ny_noaa |>
+  separate(
+    date,
+    into = c("year", "month", "day"),
+    sep = "-"
+  )
+```
+
+```{r}
+ny_noaa
+```
+
+```{r}
+ny_noaa =
+  ny_noaa |>
+  mutate(
+    prcp = prcp / 10,
+    tmax = as.numeric(tmax) / 10,
+    tmin = as.numeric(tmin) / 10
+  )
+```
+
+```{r}
+ny_noaa |>
+  count(snow) |>
+  arrange(desc(n))
+```
+
+The most common snowfall value is 0 mm which makes sense because most days do not have any snowfall. The other common values are: 25, 13, 51, and 76 mm. These values probably occur often because snowfall was originally recorded in common inch amounts and then converted to millimeters.
+
+```{r}
+ny_noaa_monthly =
+  ny_noaa |>
+  filter(month == "01" | month == "07") |>
+  drop_na(tmax) |>
+  mutate(
+    year = as.numeric(year)
+  ) |>
+  group_by(id, year, month) |>
+  summarize(
+    mean_tmax = mean(tmax)
+  )
+```
+
+```{r}
+ny_noaa_monthly |>
+  ggplot(aes(x = year, y = mean_tmax, color = id)) +
+  geom_point(alpha = .5) +
+  geom_line() +
+  facet_grid(. ~ month) +
+  labs(
+    title = "Average Maximum Temperature in January and July",
+    x = "Year",
+    y = "Average Maximum Temperature (C)"
+  ) +
+  theme(legend.position = "none")
+```
+
+January temperatures vary a lot more across stations and years than July temperatures. Most January averages are around or below 0°C and July averages are mostly in the mid to upper 20s. There are also a few noticeable outliers, including some very cold January averages and a few low July averages.
+
+```{r}
+ggp_tmax_tmin =
+  ny_noaa |>
+  drop_na(tmax, tmin) |>
+  ggplot(aes(x = tmax, y = tmin)) +
+  geom_hex() +
+  labs(
+    title = "Maximum vs Minimum Temperature",
+    x = "Maximum Temperature (C)",
+    y = "Minimum Temperature (C)"
+  )
+```
+
+```{r}
+ggp_snow =
+  ny_noaa |>
+  filter(
+    snow > 0,
+    snow < 100
+  ) |>
+  mutate(
+    year = as.numeric(year)
+  ) |>
+  ggplot(aes(x = year, y = snow)) +
+  geom_violin(aes(group = year)) +
+  scale_x_continuous(
+    breaks = c(1981, 1990, 2000, 2010)
+  ) +
+  labs(
+    title = "Snowfall by Year",
+    x = "Year",
+    y = "Snowfall (mm)"
+  )
+```
+
+```{r}
+ggp_tmax_tmin + ggp_snow
+```
+
+Maximum and minimum temperature have a strong positive relationship, with most observations concentrated on a diagonal pattern. There are also a few outlier temperature values. The snowfall distributions are pretty similar across years where most snowfall values below 100 mm concentrated at several common amounts and no major change in the overall distribution over time.
+
+# Problem 2
+
+# Problem 3
